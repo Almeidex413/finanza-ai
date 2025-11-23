@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finanza.ai - Gestão Financeira Inteligente</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Auth Screen (Login/Register) -->
+    <div id="auth-screen" class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <div class="logo-container">
+                    <div class="logo-icon">F</div>
+                    <h1 class="logo-text">Finanza<span class="logo-accent">.ai</span></h1>
+                </div>
+                <p class="auth-subtitle">Economia Comportamental + Inteligência Artificial</p>
+            </div>
+
+            <div class="auth-tabs">
+                <button id="tab-login" class="tab-btn active" onclick="switchTab('login')">Entrar</button>
+                <button id="tab-register" class="tab-btn" onclick="switchTab('register')">Criar Conta</button>
+            </div>
+
+            <!-- Login Form -->
+            <form id="login-form" class="auth-form">
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="login-email" required placeholder="seu@email.com">
+                </div>
+                <div class="form-group">
+                    <label>Senha</label>
+                    <input type="password" id="login-password" required placeholder="••••••••">
+                </div>
+                <button type="submit" class="btn-primary">Entrar</button>
+                <div id="login-error" class="error-message"></div>
+            </form>
+
+            <!-- Register Form -->
+            <form id="register-form" class="auth-form" style="display:none;">
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="register-email" required placeholder="seu@email.com">
+                </div>
+                <div class="form-group">
+                    <label>Senha</label>
+                    <input type="password" id="register-password" required placeholder="••••••••">
+                </div>
+                <button type="submit" class="btn-primary">Criar Conta</button>
+                <div id="register-error" class="error-message"></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main App Screen -->
+    <div id="app-screen" style="display:none;">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-content">
+                <div class="logo-container-sm">
+                    <div class="logo-icon-sm">F</div>
+                    <h1 class="logo-text-sm">Finanza<span class="logo-accent">.ai</span></h1>
+                </div>
+                <div class="header-actions">
+                    <span id="user-email" class="user-email"></span>
+                    <button onclick="logout()" class="btn-logout">Sair</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Navigation -->
+        <nav class="main-nav">
+            <button class="nav-btn active" onclick="showView('dashboard')" id="nav-dashboard">
+                <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+                </svg>
+                Dashboard
+            </button>
+            <button class="nav-btn" onclick="showView('transactions')" id="nav-transactions">
+                <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+                Nova Transação
+            </button>
+            <button class="nav-btn" onclick="showView('chat')" id="nav-chat">
+                <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
+                </svg>
+                Consultor IA
+            </button>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Dashboard View -->
+            <div id="view-dashboard" class="view active">
+                <div class="balance-card">
+                    <h2 class="balance-label">Saldo Disponível</h2>
+                    <div class="balance-amount">
+                        <span class="currency">R$</span>
+                        <span id="balance-value">0,00</span>
+                    </div>
+                    <div id="break-point-alert" class="alert-box" style="display:none;">
+                        <svg class="alert-icon" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                        </svg>
+                        <div>
+                            <strong id="break-point-title"></strong>
+                            <p id="break-point-message"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>Receitas do Mês</h3>
+                        <p class="stat-value income" id="monthly-income">R$ 0,00</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Despesas do Mês</h3>
+                        <p class="stat-value expense" id="monthly-expenses">R$ 0,00</p>
+                    </div>
+                </div>
+
+                <div class="transactions-list">
+                    <h3>Últimas Transações</h3>
+                    <div id="recent-transactions"></div>
+                </div>
+            </div>
+
+            <!-- Transaction Form View -->
+            <div id="view-transactions" class="view">
+                <div class="form-card">
+                    <h2>Nova Transação</h2>
+                    <form id="transaction-form">
+                        <div class="type-selector">
+                            <button type="button" class="type-btn expense active" onclick="selectType('expense')">
+                                Despesa
+                            </button>
+                            <button type="button" class="type-btn income" onclick="selectType('income')">
+                                Receita
+                            </button>
+                        </div>
+                        <input type="hidden" id="tx-type" value="expense">
+
+                        <div class="form-group">
+                            <label>Valor (R$)</label>
+                            <input type="number" step="0.01" id="tx-amount" required placeholder="0.00">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Categoria</label>
+                            <select id="tx-category" required>
+                                <option>Alimentação</option>
+                                <option>Moradia</option>
+                                <option>Transporte</option>
+                                <option>Saúde</option>
+                                <option>Lazer</option>
+                                <option>Outros</option>
+                            </select>
+                        </div>
+
+                        <button type="submit" class="btn-primary">Salvar Transação</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Chat View -->
+            <div id="view-chat" class="view">
+                <div class="chat-container">
+                    <div class="chat-header">
+                        <div class="chat-avatar">🤖</div>
+                        <div>
+                            <h3>Finanza AI</h3>
+                            <p>Consultor Financeiro Comportamental</p>
+                        </div>
+                    </div>
+                    <div id="chat-messages" class="chat-messages"></div>
+                    <form id="chat-form" class="chat-input-container">
+                        <input type="text" id="chat-input" placeholder="Pergunte sobre suas finanças..." required>
+                        <button type="submit" class="btn-send">
+                            <svg fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.517 60.517 0 003.478 2.405z"/>
+                            </svg>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

@@ -1,7 +1,7 @@
 # app.py
 # ============================================================
 #  Finanza.ai – Backend (Flask)
-#  Autor: (senior eng.)
+#  Autor: (Lucas Almeida)
 #  Objetivo: API financeira com fallback de DB, Auth JWT,
 #  integração Gemini, e servidor do frontend.
 # ============================================================
@@ -161,6 +161,97 @@ def login():
 
         token = create_jwt(user["_id"])
         return jsonify({"token": token})
+
+
+@app.route("/api/auth/forgot-password", methods=["POST"])
+def forgot_password():
+    data = request.get_json()
+    email = data.get("email", "").strip().lower()
+
+    if not email:
+        return jsonify({"error": "Email required"}), 400
+
+    # Check if user exists
+    user = None
+    if isinstance(db, MockDB):
+        user = next((u for u in db.users if u["email"] == email), None)
+    else:
+        user = db.users.find_one({"email": email})
+
+    if not user:
+        # Security: Don't reveal if user exists
+        return jsonify({"message": "If email exists, code sent."})
+
+    # Generate Code (Simple 6 digit)
+    import random
+    code = str(random.randint(100000, 999999))
+    
+    # Store Token (Mock or Mongo)
+    # For simplicity, we will store in a separate collection 'reset_tokens'
+    # Structure: { "email": email, "code": code, "exp": timestamp }
+    exp_time = datetime.datetime.utcnow() + datetime.timedelta(minutes=15)
+    
+    token_doc = {
+        "email": email,
+        "code": code,
+        "exp": exp_time
+    }
+
+    if isinstance(db, MockDB):
+        # Initialize if not exists
+        if not hasattr(db, 'reset_tokens'):
+            db.reset_tokens = []
+        # Remove old tokens for this email
+        db.reset_tokens = [t for t in db.reset_tokens if t["email"] != email]
+        db.reset_tokens.append(token_doc)
+    else:
+        db.reset_tokens.delete_many({"email": email})
+        db.reset_tokens.insert_one(token_doc)
+
+    # In a real app, send email here.
+    # For this demo, we return the code in the response so the user can test it.
+    print(f"RESET CODE FOR {email}: {code}")
+    return jsonify({"message": "Code sent", "debug_code": code})
+
+
+@app.route("/api/auth/reset-password", methods=["POST"])
+def reset_password():
+    data = request.get_json()
+    email = data.get("email", "").strip().lower()
+    code = data.get("code", "").strip()
+    new_pwd = data.get("new_password", "").encode()
+
+    if not email or not code or not new_pwd:
+        return jsonify({"error": "Missing fields"}), 400
+
+    # Verify Token
+    token_doc = None
+    if isinstance(db, MockDB):
+        if hasattr(db, 'reset_tokens'):
+            token_doc = next((t for t in db.reset_tokens if t["email"] == email and t["code"] == code), None)
+    else:
+        token_doc = db.reset_tokens.find_one({"email": email, "code": code})
+
+    if not token_doc:
+        return jsonify({"error": "Invalid or expired code"}), 400
+
+    if token_doc["exp"] < datetime.datetime.utcnow():
+        return jsonify({"error": "Code expired"}), 400
+
+    # Update Password
+    hashed = bcrypt.hashpw(new_pwd, bcrypt.gensalt())
+
+    if isinstance(db, MockDB):
+        user = next((u for u in db.users if u["email"] == email), None)
+        if user:
+            user["password"] = hashed
+            # Remove token
+            db.reset_tokens = [t for t in db.reset_tokens if t["email"] != email]
+    else:
+        db.users.update_one({"email": email}, {"$set": {"password": hashed}})
+        db.reset_tokens.delete_many({"email": email})
+
+    return jsonify({"message": "Password updated successfully"})
 
 
 # ============================================================

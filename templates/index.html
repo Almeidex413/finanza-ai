@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,6 +10,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
+
 <body>
     <!-- Auth Screen (Login/Register) -->
     <div id="auth-screen" class="auth-container">
@@ -53,6 +55,45 @@
                 <button type="submit" class="btn-primary">Criar Conta</button>
                 <div id="register-error" class="error-message"></div>
             </form>
+
+            <!-- Forgot Password Form -->
+            <div id="forgot-form" class="auth-form" style="display:none;">
+                <!-- Step 1: Request Code -->
+                <div id="forgot-step-1">
+                    <p style="color: var(--slate-400); font-size: 0.9rem; margin-bottom: 1rem;">
+                        Digite seu email para receber um código de recuperação.
+                    </p>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="forgot-email" required placeholder="seu@email.com">
+                    </div>
+                    <button onclick="handleForgotRequest()" class="btn-primary">Enviar Código</button>
+                </div>
+
+                <!-- Step 2: Reset Password -->
+                <div id="forgot-step-2" style="display:none;">
+                    <p style="color: var(--slate-400); font-size: 0.9rem; margin-bottom: 1rem;">
+                        Verifique seu email (ou console) e digite o código.
+                    </p>
+                    <div class="form-group">
+                        <label>Código de Verificação</label>
+                        <input type="text" id="forgot-code" required placeholder="123456">
+                    </div>
+                    <div class="form-group">
+                        <label>Nova Senha</label>
+                        <input type="password" id="forgot-new-password" required placeholder="••••••••">
+                    </div>
+                    <button onclick="handleResetSubmit()" class="btn-primary">Redefinir Senha</button>
+                </div>
+
+                <div id="forgot-error" class="error-message"></div>
+                <button onclick="switchTab('login')" class="btn-text" style="margin-top: 1rem; width: 100%;">Voltar para
+                    Login</button>
+            </div>
+
+            <div id="login-footer" style="margin-top: 1rem; text-align: center;">
+                <button onclick="switchTab('forgot')" class="btn-text">Esqueci minha senha</button>
+            </div>
         </div>
     </div>
 
@@ -76,19 +117,21 @@
         <nav class="main-nav">
             <button class="nav-btn active" onclick="showView('dashboard')" id="nav-dashboard">
                 <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
                 </svg>
                 Dashboard
             </button>
             <button class="nav-btn" onclick="showView('transactions')" id="nav-transactions">
                 <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                 </svg>
                 Nova Transação
             </button>
             <button class="nav-btn" onclick="showView('chat')" id="nav-chat">
                 <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
                 </svg>
                 Consultor IA
             </button>
@@ -106,7 +149,9 @@
                     </div>
                     <div id="break-point-alert" class="alert-box" style="display:none;">
                         <svg class="alert-icon" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                            <path fill-rule="evenodd"
+                                d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                                clip-rule="evenodd" />
                         </svg>
                         <div>
                             <strong id="break-point-title"></strong>
@@ -184,7 +229,8 @@
                         <input type="text" id="chat-input" placeholder="Pergunte sobre suas finanças..." required>
                         <button type="submit" class="btn-send">
                             <svg fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.517 60.517 0 003.478 2.405z"/>
+                                <path
+                                    d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.517 60.517 0 003.478 2.405z" />
                             </svg>
                         </button>
                     </form>
@@ -195,4 +241,5 @@
 
     <script src="/static/js/app.js"></script>
 </body>
+
 </html>

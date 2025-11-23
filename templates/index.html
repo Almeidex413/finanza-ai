@@ -128,6 +128,13 @@
                 </svg>
                 Nova Transação
             </button>
+            <button class="nav-btn" onclick="showView('budget')" id="nav-budget">
+                <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                </svg>
+                Orçamento
+            </button>
             <button class="nav-btn" onclick="showView('chat')" id="nav-chat">
                 <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -209,7 +216,101 @@
                             </select>
                         </div>
 
+                        <div class="form-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="tx-high-risk" onchange="toggleHighRisk()">
+                                ⚠️ Alto Risco (Dívida/Juros)
+                            </label>
+                        </div>
+
+                        <div class="form-group" id="group-interest" style="display:none;">
+                            <label>Taxa de Juros Mensal (%)</label>
+                            <input type="number" step="0.01" id="tx-interest" placeholder="0.00">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="tx-installments-check" onchange="toggleInstallments()">
+                                Compra Parcelada
+                            </label>
+                        </div>
+
+                        <div class="form-group" id="group-installments" style="display:none;">
+                            <label>Número de Parcelas</label>
+                            <input type="number" id="tx-installments-count" min="2" value="2"
+                                oninput="calculateTotalDebt()">
+                        </div>
+
+                        <div id="debt-impact" class="alert-box" style="display:none; margin-top: 10px;">
+                            <svg class="alert-icon" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd"
+                                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 002 0V6a1 1 0 00-1-1z"
+                                    clip-rule="evenodd" />
+                            </svg>
+                            <div>
+                                <strong>Impacto Total Futuro:</strong>
+                                <p id="debt-total-value">R$ 0,00</p>
+                            </div>
+                        </div>
+
                         <button type="submit" class="btn-primary">Salvar Transação</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Budget View -->
+            <div id="view-budget" class="view">
+                <div class="budget-header">
+                    <h2>Orçamento Mensal</h2>
+                    <p class="budget-subtitle">Gerencie seus limites de gastos por categoria</p>
+                </div>
+
+                <div class="budget-summary">
+                    <div class="budget-summary-card">
+                        <h3>Total Orçado</h3>
+                        <p class="budget-total" id="total-budget">R$ 0,00</p>
+                    </div>
+                    <div class="budget-summary-card">
+                        <h3>Total Gasto</h3>
+                        <p class="budget-spent" id="total-spent">R$ 0,00</p>
+                    </div>
+                    <div class="budget-summary-card">
+                        <h3>Disponível</h3>
+                        <p class="budget-remaining" id="total-remaining">R$ 0,00</p>
+                    </div>
+                </div>
+
+                <div class="budget-list">
+                    <div class="budget-list-header">
+                        <h3>Categorias</h3>
+                        <button onclick="showAddBudgetForm()" class="btn-add-budget">+ Nova Categoria</button>
+                    </div>
+                    <div id="budget-items-container"></div>
+                </div>
+
+                <!-- Add Budget Form (Initially Hidden) -->
+                <div id="add-budget-form" class="form-card" style="display:none; margin-top: 24px;">
+                    <h3>Adicionar Orçamento</h3>
+                    <form id="budget-form">
+                        <div class="form-group">
+                            <label>Categoria</label>
+                            <select id="budget-category" required>
+                                <option>Alimentação</option>
+                                <option>Moradia</option>
+                                <option>Transporte</option>
+                                <option>Saúde</option>
+                                <option>Lazer</option>
+                                <option>Outros</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Limite Mensal (R$)</label>
+                            <input type="number" step="0.01" id="budget-limit" required placeholder="0.00">
+                        </div>
+                        <div style="display: flex; gap: 12px;">
+                            <button type="button" onclick="hideAddBudgetForm()" class="btn-text">Cancelar</button>
+                            <button type="submit" class="btn-primary">Salvar Orçamento</button>
+                        </div>
                     </form>
                 </div>
             </div>

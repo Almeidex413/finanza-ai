@@ -210,6 +210,8 @@ function showView(viewName) {
 
     if (viewName === 'dashboard') {
         loadDashboard();
+    } else if (viewName === 'budget') {
+        loadBudgetView();
     }
 }
 
@@ -432,6 +434,44 @@ function selectType(type) {
     }
 }
 
+function toggleHighRisk() {
+    const isHighRisk = document.getElementById('tx-high-risk').checked;
+    const formCard = document.querySelector('#transaction-form').closest('.form-card');
+    const interestGroup = document.getElementById('group-interest');
+
+    if (isHighRisk) {
+        document.body.classList.add('high-risk-mode');
+        interestGroup.style.display = 'flex';
+    } else {
+        document.body.classList.remove('high-risk-mode');
+        interestGroup.style.display = 'none';
+    }
+}
+
+function toggleInstallments() {
+    const isInstallments = document.getElementById('tx-installments-check').checked;
+    const installmentsGroup = document.getElementById('group-installments');
+    const debtImpact = document.getElementById('debt-impact');
+
+    if (isInstallments) {
+        installmentsGroup.style.display = 'flex';
+        debtImpact.style.display = 'flex';
+        calculateTotalDebt();
+    } else {
+        installmentsGroup.style.display = 'none';
+        debtImpact.style.display = 'none';
+    }
+}
+
+function calculateTotalDebt() {
+    const amount = parseFloat(document.getElementById('tx-amount').value) || 0;
+    const installments = parseInt(document.getElementById('tx-installments-count').value) || 1;
+    const total = amount * installments;
+
+    document.getElementById('debt-total-value').textContent =
+        'R$ ' + total.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+}
+
 async function handleTransactionSubmit(e) {
     e.preventDefault();
 
@@ -453,6 +493,10 @@ async function handleTransactionSubmit(e) {
             // Reset form
             document.getElementById('transaction-form').reset();
             selectType('expense');
+
+            // Reset visual state
+            toggleHighRisk();
+            toggleInstallments();
 
             // Go back to dashboard
             showView('dashboard');
@@ -553,6 +597,168 @@ function removeTypingIndicator() {
 
 
 // ============================================================
+// BUDGET MODULE
+// ============================================================
+
+let budgets = {}; // Store budgets in memory (category -> limit)
+
+async function loadBudgetView() {
+    try {
+        // Get transactions to calculate spending
+        const txRes = await fetch(`${API_BASE}/transactions`, {
+            headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        const transactions = await txRes.json();
+
+        renderBudgetView(transactions);
+    } catch (error) {
+        console.error('Error loading budget:', error);
+    }
+}
+
+function renderBudgetView(transactions) {
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const monthlyExpenses = transactions.filter(t =>
+        t.type === 'expense' && new Date(t.created_at) >= startOfMonth
+    );
+
+    // Calculate spending by category
+    const spendingByCategory = {};
+    monthlyExpenses.forEach(tx => {
+        if (!spendingByCategory[tx.category]) {
+            spendingByCategory[tx.category] = 0;
+        }
+        spendingByCategory[tx.category] += tx.amount;
+    });
+
+    // Calculate totals
+    let totalBudget = 0;
+    let totalSpent = 0;
+
+    Object.keys(budgets).forEach(category => {
+        totalBudget += budgets[category];
+        totalSpent += spendingByCategory[category] || 0;
+    });
+
+    // Update summary
+    document.getElementById('total-budget').textContent =
+        'R$ ' + totalBudget.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+    document.getElementById('total-spent').textContent =
+        'R$ ' + totalSpent.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+    document.getElementById('total-remaining').textContent =
+        'R$ ' + (totalBudget - totalSpent).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+
+    // Render budget items
+    const container = document.getElementById('budget-items-container');
+
+    if (Object.keys(budgets).length === 0) {
+        container.innerHTML = `
+            <div class="budget-empty">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                        d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                </svg>
+                <p>Nenhum orçamento configurado ainda</p>
+                <p style="font-size: 13px; margin-top: 8px;">Clique em "+ Nova Categoria" para começar</p>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = Object.keys(budgets).map(category => {
+        const limit = budgets[category];
+        const spent = spendingByCategory[category] || 0;
+        const percentage = limit > 0 ? (spent / limit) * 100 : 0;
+
+        let status = 'ok';
+        if (percentage >= 100) status = 'danger';
+        else if (percentage >= 75) status = 'warning';
+
+        return `
+            <div class="budget-item" id="budget-item-${category}">
+                <div class="budget-item-header">
+                    <span class="budget-category-name">${category}</span>
+                    <div class="budget-values">
+                        <span class="budget-spent-value">R$ ${spent.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                        <span class="budget-limit-value">/ R$ ${limit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                    </div>
+                </div>
+                <div class="budget-progress-container">
+                    <div class="budget-progress-bar">
+                        <div class="budget-progress-fill status-${status}" style="width: ${Math.min(percentage, 100)}%"></div>
+                    </div>
+                    <div class="budget-percentage status-${status}">${percentage.toFixed(1)}% utilizado</div>
+                </div>
+                <div class="budget-actions">
+                    <button onclick="editBudgetInline('${category}')" class="btn-edit-budget">Editar Limite</button>
+                    <button onclick="deleteBudget('${category}')" class="btn-delete-budget">Excluir</button>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function showAddBudgetForm() {
+    document.getElementById('add-budget-form').style.display = 'block';
+}
+
+function hideAddBudgetForm() {
+    document.getElementById('add-budget-form').style.display = 'none';
+    document.getElementById('budget-form').reset();
+}
+
+async function handleBudgetSubmit(e) {
+    e.preventDefault();
+
+    const category = document.getElementById('budget-category').value;
+    const limit = parseFloat(document.getElementById('budget-limit').value);
+
+    if (budgets[category]) {
+        alert('Já existe um orçamento para esta categoria. Use "Editar Limite" para alterá-lo.');
+        return;
+    }
+
+    budgets[category] = limit;
+    hideAddBudgetForm();
+    loadBudgetView();
+}
+
+function editBudgetInline(category) {
+    const item = document.getElementById(`budget-item-${category}`);
+    const currentLimit = budgets[category];
+
+    const actionsDiv = item.querySelector('.budget-actions');
+    actionsDiv.innerHTML = `
+        <div class="budget-edit-inline">
+            <input type="number" step="0.01" id="edit-limit-${category}" value="${currentLimit}" placeholder="Novo limite">
+            <button onclick="saveBudgetEdit('${category}')" class="btn-save">Salvar</button>
+            <button onclick="loadBudgetView()" class="btn-cancel">Cancelar</button>
+        </div>
+    `;
+}
+
+function saveBudgetEdit(category) {
+    const newLimit = parseFloat(document.getElementById(`edit-limit-${category}`).value);
+
+    if (newLimit <= 0 || isNaN(newLimit)) {
+        alert('Digite um valor válido');
+        return;
+    }
+
+    budgets[category] = newLimit;
+    loadBudgetView();
+}
+
+function deleteBudget(category) {
+    if (!confirm(`Tem certeza que deseja excluir o orçamento de ${category}?`)) return;
+
+    delete budgets[category];
+    loadBudgetView();
+}
+
+
+// ============================================================
 // INIT
 // ============================================================
 
@@ -567,6 +773,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Chat form handler
     document.getElementById('chat-form').addEventListener('submit', handleChatSubmit);
+
+    // Budget form handler
+    document.getElementById('budget-form').addEventListener('submit', handleBudgetSubmit);
+
+    // Transaction amount listener for debt calculation
+    document.getElementById('tx-amount').addEventListener('input', calculateTotalDebt);
 
     // Check if user is already logged in
     if (authToken) {

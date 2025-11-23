@@ -1036,3 +1036,331 @@ body {
 }
 
 ```
+/* ============================================================
+   COGNITIVE FRICTION ENHANCEMENTS
+============================================================ */
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    color: var(--slate-700);
+    margin-bottom: 8px;
+    user-select: none;
+}
+
+.checkbox-label input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: var(--brand-primary);
+}
+
+.high-risk-mode .form-card {
+    border: 2px solid var(--danger);
+    background: #fff1f2;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+.high-risk-mode .btn-primary {
+    background: var(--danger);
+}
+
+.high-risk-mode .btn-primary:hover {
+    background: var(--danger-dark);
+}
+
+#debt-impact {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    animation: slideIn 0.3s ease;
+}
+
+#debt-impact strong {
+    color: var(--danger);
+}
+
+#debt-impact p {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--danger);
+    margin-top: 4px;
+}
+/* ============================================================
+   BUDGET MODULE
+============================================================ */
+
+.budget-header {
+    margin-bottom: 32px;
+}
+
+.budget-header h2 {
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--slate-900);
+    margin-bottom: 8px;
+}
+
+.budget-subtitle {
+    color: var(--slate-600);
+    font-size: 15px;
+}
+
+.budget-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-bottom: 32px;
+}
+
+.budget-summary-card {
+    background: white;
+    padding: 24px;
+    border-radius: 16px;
+    border: 1px solid var(--slate-200);
+}
+
+.budget-summary-card h3 {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--slate-600);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 12px;
+}
+
+.budget-total {
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--brand-primary);
+}
+
+.budget-spent {
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--slate-700);
+}
+
+.budget-remaining {
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--success);
+}
+
+.budget-list {
+    background: white;
+    padding: 24px;
+    border-radius: 16px;
+    border: 1px solid var(--slate-200);
+}
+
+.budget-list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.budget-list-header h3 {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--slate-900);
+}
+
+.btn-add-budget {
+    padding: 10px 20px;
+    background: var(--brand-primary);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-add-budget:hover {
+    background: var(--brand-dark);
+    transform: translateY(-1px);
+}
+
+.budget-item {
+    padding: 20px 0;
+    border-bottom: 1px solid var(--slate-100);
+}
+
+.budget-item:last-child {
+    border-bottom: none;
+}
+
+.budget-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.budget-category-name {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--slate-800);
+}
+
+.budget-values {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-size: 14px;
+}
+
+.budget-spent-value {
+    font-weight: 600;
+}
+
+.budget-limit-value {
+    color: var(--slate-500);
+}
+
+.budget-progress-container {
+    position: relative;
+    margin-bottom: 12px;
+}
+
+.budget-progress-bar {
+    height: 12px;
+    background: var(--slate-100);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.budget-progress-fill {
+    height: 100%;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+}
+
+.budget-progress-fill.status-ok {
+    background: linear-gradient(90deg, var(--success) 0%, #34d399 100%);
+}
+
+.budget-progress-fill.status-warning {
+    background: linear-gradient(90deg, var(--warning) 0%, #fbbf24 100%);
+}
+
+.budget-progress-fill.status-danger {
+    background: linear-gradient(90deg, var(--danger) 0%, #f87171 100%);
+}
+
+.budget-percentage {
+    font-size: 12px;
+    font-weight: 600;
+    margin-top: 4px;
+}
+
+.budget-percentage.status-ok {
+    color: var(--success);
+}
+
+.budget-percentage.status-warning {
+    color: var(--warning);
+}
+
+.budget-percentage.status-danger {
+    color: var(--danger);
+}
+
+.budget-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-edit-budget {
+    padding: 6px 12px;
+    background: var(--slate-100);
+    color: var(--slate-700);
+    border: none;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-edit-budget:hover {
+    background: var(--slate-200);
+}
+
+.btn-delete-budget {
+    padding: 6px 12px;
+    background: #fee2e2;
+    color: var(--danger);
+    border: none;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-delete-budget:hover {
+    background: #fecaca;
+}
+
+.budget-edit-inline {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    margin-top: 12px;
+}
+
+.budget-edit-inline input {
+    flex: 1;
+    padding: 8px 12px;
+    border: 2px solid var(--brand-primary);
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+.budget-edit-inline button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.budget-edit-inline .btn-save {
+    background: var(--brand-primary);
+    color: white;
+}
+
+.budget-edit-inline .btn-save:hover {
+    background: var(--brand-dark);
+}
+
+.budget-edit-inline .btn-cancel {
+    background: var(--slate-200);
+    color: var(--slate-700);
+}
+
+.budget-edit-inline .btn-cancel:hover {
+    background: var(--slate-300);
+}
+
+.budget-empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--slate-500);
+}
+
+.budget-empty svg {
+    width: 64px;
+    height: 64px;
+    margin-bottom: 16px;
+    opacity: 0.5;
+}

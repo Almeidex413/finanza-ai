@@ -239,6 +239,53 @@
         </main>
     </div>
 
+    <!-- Edit Modal -->
+    <div id="edit-modal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Editar Transação</h2>
+                <button onclick="closeEditModal()" class="btn-close">&times;</button>
+            </div>
+            <form id="edit-form">
+                <input type="hidden" id="edit-id">
+
+                <div class="type-selector">
+                    <button type="button" id="edit-type-expense" class="type-btn expense"
+                        onclick="selectEditType('expense')">
+                        Despesa
+                    </button>
+                    <button type="button" id="edit-type-income" class="type-btn income"
+                        onclick="selectEditType('income')">
+                        Receita
+                    </button>
+                </div>
+                <input type="hidden" id="edit-type">
+
+                <div class="form-group">
+                    <label>Valor (R$)</label>
+                    <input type="number" step="0.01" id="edit-amount" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Categoria</label>
+                    <select id="edit-category" required>
+                        <option>Alimentação</option>
+                        <option>Moradia</option>
+                        <option>Transporte</option>
+                        <option>Saúde</option>
+                        <option>Lazer</option>
+                        <option>Outros</option>
+                    </select>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" onclick="closeEditModal()" class="btn-text">Cancelar</button>
+                    <button type="submit" class="btn-primary">Salvar Alterações</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script src="/static/js/app.js"></script>
 </body>
 

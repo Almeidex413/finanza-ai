@@ -298,6 +298,71 @@ def post_transaction():
         return jsonify({"ok": True})
 
 
+@app.route("/api/transactions/<tx_id>", methods=["DELETE"])
+@token_required
+def delete_transaction(tx_id):
+    uid = request.user_id
+
+    if isinstance(db, MockDB):
+        # MockDB uses integer IDs mostly, but let's handle string comparison
+        initial_len = len(db.transactions)
+        db.transactions = [t for t in db.transactions if str(t.get("_id")) != str(tx_id) or str(t["user_id"]) != str(uid)]
+        
+        if len(db.transactions) == initial_len:
+            return jsonify({"error": "Transaction not found"}), 404
+            
+        return jsonify({"ok": True})
+
+    else:
+        from bson.objectid import ObjectId
+        try:
+            res = db.transactions.delete_one({"_id": ObjectId(tx_id), "user_id": uid})
+            if res.deleted_count == 0:
+                return jsonify({"error": "Transaction not found"}), 404
+            return jsonify({"ok": True})
+        except Exception:
+            return jsonify({"error": "Invalid ID"}), 400
+
+
+@app.route("/api/transactions/<tx_id>", methods=["PUT"])
+@token_required
+def update_transaction(tx_id):
+    uid = request.user_id
+    data = request.get_json()
+
+    update_fields = {}
+    if "amount" in data:
+        update_fields["amount"] = float(data["amount"])
+    if "category" in data:
+        update_fields["category"] = data["category"]
+    if "type" in data:
+        update_fields["type"] = data["type"]
+
+    if not update_fields:
+        return jsonify({"error": "No fields to update"}), 400
+
+    if isinstance(db, MockDB):
+        tx = next((t for t in db.transactions if str(t.get("_id")) == str(tx_id) and str(t["user_id"]) == str(uid)), None)
+        if not tx:
+            return jsonify({"error": "Transaction not found"}), 404
+        
+        tx.update(update_fields)
+        return jsonify({"ok": True})
+
+    else:
+        from bson.objectid import ObjectId
+        try:
+            res = db.transactions.update_one(
+                {"_id": ObjectId(tx_id), "user_id": uid},
+                {"$set": update_fields}
+            )
+            if res.matched_count == 0:
+                return jsonify({"error": "Transaction not found"}), 404
+            return jsonify({"ok": True})
+        except Exception:
+            return jsonify({"error": "Invalid ID"}), 400
+
+
 @app.route("/api/budgets", methods=["GET"])
 @token_required
 def get_budgets():

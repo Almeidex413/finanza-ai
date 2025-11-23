@@ -313,11 +313,39 @@ function renderRecentTransactions(transactions) {
                 <div class="transaction-category">${tx.category}</div>
                 <div class="transaction-date">${new Date(tx.created_at).toLocaleDateString('pt-BR')}</div>
             </div>
-            <div class="transaction-amount ${tx.type}">
-                ${tx.type === 'income' ? '+' : '-'}R$ ${tx.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+            <div class="transaction-actions">
+                <div class="transaction-amount ${tx.type}">
+                    ${tx.type === 'income' ? '+' : '-'}R$ ${tx.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                </div>
+                <button onclick="deleteTransaction('${tx._id}')" class="btn-icon delete" title="Excluir">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                    </svg>
+                </button>
             </div>
         </div>
     `).join('');
+}
+
+async function deleteTransaction(txId) {
+    if (!confirm('Tem certeza que deseja excluir esta transação?')) return;
+
+    try {
+        const response = await fetch(`${API_BASE}/transactions/${txId}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
+
+        if (response.ok) {
+            loadDashboard(); // Reload to update UI
+        } else {
+            alert('Erro ao excluir transação');
+        }
+    } catch (error) {
+        alert('Erro de conexão');
+    }
 }
 
 // ============================================================

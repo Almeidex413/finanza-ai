@@ -366,13 +366,89 @@ def update_transaction(tx_id):
 @app.route("/api/budgets", methods=["GET"])
 @token_required
 def get_budgets():
-    # Pode vir do banco; mas, se não houver, usar mock básico
-    budgets = [
-        {"category": "Alimentação", "limit": 1500},
-        {"category": "Saúde", "limit": 500},
-        {"category": "Lazer", "limit": 600},
-    ]
-    return jsonify(budgets)
+    uid = request.user_id
+
+    if isinstance(db, MockDB):
+        # Initialize budgets list if not exists
+        if not hasattr(db, 'budgets'):
+            db.budgets = []
+        budgets = [b for b in db.budgets if str(b["user_id"]) == str(uid)]
+        return jsonify(budgets)
+    else:
+        budgets = list(db.budgets.find({"user_id": uid}))
+        for b in budgets:
+            b["_id"] = str(b["_id"])
+        return jsonify(budgets)
+
+
+@app.route("/api/budgets", methods=["POST"])
+@token_required
+def create_budget():
+    uid = request.user_id
+    data = request.get_json()
+
+    budget = {
+        "user_id": uid,
+        "category": data.get("category", ""),
+        "limit": float(data.get("limit", 0)),
+        "created_at": datetime.datetime.utcnow()
+    }
+
+    if isinstance(db, MockDB):
+        if not hasattr(db, 'budgets'):
+            db.budgets = []
+        budget["_id"] = len(db.budgets) + 1
+        db.budgets.append(budget)
+        return jsonify({"ok": True, "budget": budget})
+    else:
+        result = db.budgets.insert_one(budget)
+        budget["_id"] = str(result.inserted_id)
+        return jsonify({"ok": True, "budget": budget})
+
+
+@app.route("/api/budgets/<category>", methods=["PUT"])
+@token_required
+def update_budget(category):
+    uid = request.user_id
+    data = request.get_json()
+    new_limit = float(data.get("limit", 0))
+
+    if isinstance(db, MockDB):
+        if not hasattr(db, 'budgets'):
+            db.budgets = []
+        budget = next((b for b in db.budgets if str(b["user_id"]) == str(uid) and b["category"] == category), None)
+        if not budget:
+            return jsonify({"error": "Budget not found"}), 404
+        budget["limit"] = new_limit
+        return jsonify({"ok": True})
+    else:
+        result = db.budgets.update_one(
+            {"user_id": uid, "category": category},
+            {"$set": {"limit": new_limit}}
+        )
+        if result.matched_count == 0:
+            return jsonify({"error": "Budget not found"}), 404
+        return jsonify({"ok": True})
+
+
+@app.route("/api/budgets/<category>", methods=["DELETE"])
+@token_required
+def delete_budget(category):
+    uid = request.user_id
+
+    if isinstance(db, MockDB):
+        if not hasattr(db, 'budgets'):
+            db.budgets = []
+        initial_len = len(db.budgets)
+        db.budgets = [b for b in db.budgets if not (str(b["user_id"]) == str(uid) and b["category"] == category)]
+        if len(db.budgets) == initial_len:
+            return jsonify({"error": "Budget not found"}), 404
+        return jsonify({"ok": True})
+    else:
+        result = db.budgets.delete_one({"user_id": uid, "category": category})
+        if result.deleted_count == 0:
+            return jsonify({"error": "Budget not found"}), 404
+        return jsonify({"ok": True})
 
 
 @app.route("/api/user/balance", methods=["GET"])
@@ -448,4 +524,6 @@ def index():
 # Main
 # ============================================================
 if __name__ == "__main__":
-    app.run(debug=True)
+    # Use environment variable for debug mode (default: False for production)
+    debug_mode = os.getenv("FLASK_DEBUG", "False").lower() == "true"
+    app.run(debug=debug_mode)

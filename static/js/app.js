@@ -597,26 +597,30 @@ function removeTypingIndicator() {
 
 
 // ============================================================
-// BUDGET MODULE
+// BUDGET MODULE - WITH API PERSISTENCE
 // ============================================================
-
-let budgets = {}; // Store budgets in memory (category -> limit)
 
 async function loadBudgetView() {
     try {
+        // Get budgets from API
+        const budgetRes = await fetch(`${API_BASE}/budgets`, {
+            headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        const budgetsData = await budgetRes.json();
+
         // Get transactions to calculate spending
         const txRes = await fetch(`${API_BASE}/transactions`, {
             headers: { 'Authorization': `Bearer ${authToken}` }
         });
         const transactions = await txRes.json();
 
-        renderBudgetView(transactions);
+        renderBudgetView(transactions, budgetsData);
     } catch (error) {
         console.error('Error loading budget:', error);
     }
 }
 
-function renderBudgetView(transactions) {
+function renderBudgetView(transactions, budgetsData) {
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const monthlyExpenses = transactions.filter(t =>
@@ -636,9 +640,9 @@ function renderBudgetView(transactions) {
     let totalBudget = 0;
     let totalSpent = 0;
 
-    Object.keys(budgets).forEach(category => {
-        totalBudget += budgets[category];
-        totalSpent += spendingByCategory[category] || 0;
+    budgetsData.forEach(budget => {
+        totalBudget += budget.limit;
+        totalSpent += spendingByCategory[budget.category] || 0;
     });
 
     // Update summary
@@ -652,7 +656,7 @@ function renderBudgetView(transactions) {
     // Render budget items
     const container = document.getElementById('budget-items-container');
 
-    if (Object.keys(budgets).length === 0) {
+    if (budgetsData.length === 0) {
         container.innerHTML = `
             <div class="budget-empty">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -666,8 +670,9 @@ function renderBudgetView(transactions) {
         return;
     }
 
-    container.innerHTML = Object.keys(budgets).map(category => {
-        const limit = budgets[category];
+    container.innerHTML = budgetsData.map(budget => {
+        const category = budget.category;
+        const limit = budget.limit;
         const spent = spendingByCategory[category] || 0;
         const percentage = limit > 0 ? (spent / limit) * 100 : 0;
 
@@ -691,7 +696,7 @@ function renderBudgetView(transactions) {
                     <div class="budget-percentage status-${status}">${percentage.toFixed(1)}% utilizado</div>
                 </div>
                 <div class="budget-actions">
-                    <button onclick="editBudgetInline('${category}')" class="btn-edit-budget">Editar Limite</button>
+                    <button onclick="editBudgetInline('${category}', ${limit})" class="btn-edit-budget">Editar Limite</button>
                     <button onclick="deleteBudget('${category}')" class="btn-delete-budget">Excluir</button>
                 </div>
             </div>
@@ -714,20 +719,30 @@ async function handleBudgetSubmit(e) {
     const category = document.getElementById('budget-category').value;
     const limit = parseFloat(document.getElementById('budget-limit').value);
 
-    if (budgets[category]) {
-        alert('Já existe um orçamento para esta categoria. Use "Editar Limite" para alterá-lo.');
-        return;
-    }
+    try {
+        const response = await fetch(`${API_BASE}/budgets`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`
+            },
+            body: JSON.stringify({ category, limit })
+        });
 
-    budgets[category] = limit;
-    hideAddBudgetForm();
-    loadBudgetView();
+        if (response.ok) {
+            hideAddBudgetForm();
+            loadBudgetView();
+        } else {
+            const data = await response.json();
+            alert(data.error || 'Erro ao criar orçamento');
+        }
+    } catch (error) {
+        alert('Erro de conexão ao salvar orçamento');
+    }
 }
 
-function editBudgetInline(category) {
+function editBudgetInline(category, currentLimit) {
     const item = document.getElementById(`budget-item-${category}`);
-    const currentLimit = budgets[category];
-
     const actionsDiv = item.querySelector('.budget-actions');
     actionsDiv.innerHTML = `
         <div class="budget-edit-inline">
@@ -738,7 +753,7 @@ function editBudgetInline(category) {
     `;
 }
 
-function saveBudgetEdit(category) {
+async function saveBudgetEdit(category) {
     const newLimit = parseFloat(document.getElementById(`edit-limit-${category}`).value);
 
     if (newLimit <= 0 || isNaN(newLimit)) {
@@ -746,15 +761,45 @@ function saveBudgetEdit(category) {
         return;
     }
 
-    budgets[category] = newLimit;
-    loadBudgetView();
+    try {
+        const response = await fetch(`${API_BASE}/budgets/${encodeURIComponent(category)}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`
+            },
+            body: JSON.stringify({ limit: newLimit })
+        });
+
+        if (response.ok) {
+            loadBudgetView();
+        } else {
+            alert('Erro ao atualizar orçamento');
+        }
+    } catch (error) {
+        alert('Erro de conexão ao atualizar orçamento');
+    }
 }
 
-function deleteBudget(category) {
+async function deleteBudget(category) {
     if (!confirm(`Tem certeza que deseja excluir o orçamento de ${category}?`)) return;
 
-    delete budgets[category];
-    loadBudgetView();
+    try {
+        const response = await fetch(`${API_BASE}/budgets/${encodeURIComponent(category)}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
+
+        if (response.ok) {
+            loadBudgetView();
+        } else {
+            alert('Erro ao excluir orçamento');
+        }
+    } catch (error) {
+        alert('Erro de conexão ao excluir orçamento');
+    }
 }
 
 
